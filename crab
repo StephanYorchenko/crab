@@ -1,0 +1,172 @@
+#!/bin/bash
+
+INIT_PAR="#Specify the file extension to add to the backup
+set_file_type='db';
+#Directory with original files intended for saving in backup
+origin_dirrectory=$(pwd)
+#Specify the maximum number of backups to store (default: 5)
+number_backups=5
+#Specify text-editor (default: vim)
+text_editor=vim"
+
+
+
+function help {
+
+    echo "
+---------------------------------------------
+|     #####   #####      ###   #####        |
+|    #        #    #   #   #   #    #       |
+|    #        #    #   #   #   #    #       |
+|    #        #####    #####   #####        |
+|    #        #   #    #   #   #    #       |
+|     #####   #    #   #   #   #####        |
+|   CRAB - Create Regular Amiable Backup    |
+---------------------------------------------
+usage <\$path_to_script>/crab [-v | --version]
+                             [-h | --help]
+                             [-i | --init]
+                             [-m | --make]
+                             [-c | --config]
+                             [-e | --ecron]
+---------------------------------------------
+-v --version   (show version of the script)
+-h --help      (show this tutorial)
+-i --init      (create crabrc file in dirrectory for backup
+-m --make      (create backup manually)
+-c --config    (rewrite configuration file)
+-e --ecron     (change crontab config)
+
+To use CRAB, please move the script to the directory you want to backup."
+    
+}
+
+function check_utils {
+
+    . ./.crabrc || text_editor='vim'
+    echo $(which $text_editor)
+    if [ -z  $(which $text_editor) ]
+    then
+        echo "Please install $text_editor  or specify text-editor by using 'crab --set-text-editor <editor_name>'"
+        exit
+    fi
+}
+
+function change_config {
+    
+    cd "$(dirname "$0")" || return
+    echo "#Specify the file extension to add to the backup
+set_file_type=$set_file_type;
+#Directory with original files intended for saving in backup
+origin_dirrectory=$origin_dirrectory
+#Specify the maximum number of backups to store (default: 5)
+number_backups=$number_backups
+#Specify text-editor (default: vim)
+text_editor=$text_editor" > .crabrc
+     
+}
+
+function set_text_editor {
+    
+    . ./.crabrc
+    text_editor=$(echo $1)
+    change_config
+}
+
+function init {
+    
+    echo "$INIT_PAR" > .crabrc
+    check_utils || exit
+    echo -e "\e[5m Create .crabrc file... \e[0m"
+    sleep 3s
+    . ./.crabrc
+    $text_editor .crabrc
+}
+
+function make_backup {
+    cd "$(dirname "$0")" || return
+    if [[ -f .crabrc ]]
+    then
+        . ./.crabrc
+        echo "Get to work, guys! Create a backup!"
+        archive="backup-$(date +%Y-%m-%d:%H:%M:%S)"
+        EXT=$set_file_type
+        mkdir -p "$origin_dirrectory"
+        zip -r "$origin_dirrectory/$archive.zip" $(ls | grep "$EXT") >> /dev/null
+        if [[ $(unzip -tq "$origin_dirrectory/$archive.zip") == "No"* ]]
+        then
+            check_count_files
+            echo "Saving..."
+        else
+            unzip -tq "$origin_dirrectory/$archive.zip"
+            echo "It seems that the backup was broken... I'll delete it now, and you try to check your files, then I'll try again."
+            rm "$origin_dirrectory/$archive.zip"
+        fi
+    else
+        echo "You'll never learn! Maybe you can use '.crab -i'?"
+    fi
+}
+
+function edit_crontab {
+
+    echo 'Please edit your crontab to change periodicity of making backups'
+    read -r -p "Are you sure? [y/N] " response
+    if [[ "$response" =~ ^([yY][eE][sS]|[yY]|[дД][аА]|[дД])$ ]]
+    then
+        crontab -e
+    else
+        echo "Ahh, here we go again... And when will you stop bothering me unnecessarily?" 
+    fi
+}
+
+function version {
+    
+    echo -e "\e[35;1;5;101mC\e[37;102mR\e[36;105mA\e[39;107mB\e[0m" v.1.0.5
+}
+
+function check_count_files {
+    
+    cd "$(dirname "$0")" || return
+    . ./.crabrc
+    cd "$origin_dirrectory" ||return
+    cur_number=$(ls  | grep -c 'backup-.*.zip')
+    let "cur_number=$cur_number+1"
+    if [[ $cur_number -gt $number_backups ]]
+    then
+        rm $(ls | grep 'backup-.*.zip' | sort | grep --max-count=1 "backup")
+        echo "The oldest backup has been deleted"
+    fi
+}
+
+function write_config {
+
+    . ./.crabrc || text_editor='vim'
+    check_utils
+    $text_editor .crabrc
+}
+
+if [ -n "$1" ]
+then
+    while [ -n "$1" ]
+    do
+        case "$1" in
+            -i) init;;
+            --init) init;;
+            -c) write_config;;
+            --config) write_config;;
+            -e) edit_crontab;;
+            --ecron) edit_crontab;;
+            -h) help;;
+            --help) help;;
+            -m) make_backup;;
+            --make) make_backup;;
+            -v) version;;
+            --version) version;;
+            --set-text-editor) set_text_editor "$2";;
+            *) help;;
+        esac
+        shift
+    done
+else
+    help
+fi
