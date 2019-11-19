@@ -68,8 +68,15 @@ text_editor=$text_editor" > .crabrc
 
 function set_text_editor {
     
-    . ./.crabrc
+    . ./.crabrc || (echo Try to use 'crab -i' && exit)
     text_editor=$(echo $1)
+    change_config
+}
+
+function set_number_backups {
+
+    . ./.crabrc || (echo Try to use 'crab -i' && exit)
+    number_backups=$1
     change_config
 }
 
@@ -84,6 +91,7 @@ function init {
 }
 
 function make_backup {
+    
     cd "$(dirname "$0")" || return
     if [[ -f .crabrc ]]
     then
@@ -91,11 +99,11 @@ function make_backup {
         echo "Get to work, guys! Create a backup!"
         archive="backup-$(date +%Y-%m-%d:%H:%M:%S)"
         EXT=$set_file_type
+        check_count_files
         mkdir -p "$origin_dirrectory"
         zip -r "$origin_dirrectory/$archive.zip" $(ls | grep "$EXT") >> /dev/null
         if [[ $(unzip -tq "$origin_dirrectory/$archive.zip") == "No"* ]]
         then
-            check_count_files
             echo "Saving..."
         else
             unzip -tq "$origin_dirrectory/$archive.zip"
@@ -163,6 +171,7 @@ then
             -v) version;;
             --version) version;;
             --set-text-editor) set_text_editor "$2";;
+            --set-number-backups) set_number_backups "$2";;
             *) help;;
         esac
         shift
