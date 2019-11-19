@@ -46,6 +46,7 @@ usage <\$path_to_script>/crab [-v | --version]
 --set-number-backups     (change number backups (default: 5))
 --set-file-type          (set type of files to save in backups)
 --set-destination-folder (set the path where backups will be stored)
+--set-origin-folder      (set the path where the original files are stored)
 
 To use CRAB, please move the script to the directory you want to backup."
     
@@ -135,6 +136,17 @@ function set_destination_folder {
     fi 
 }
 
+function set_origin_folder {
+
+    if [ -n "$1" ]
+    then
+        . ~/.crabrc || (echo Try to use 'crab -i' && exit)
+        origin_folder=$1
+        change_config
+    else
+        help
+    fi 
+}
 function init {
     
     echo "$INIT_PAR" > ~/.crabrc
@@ -227,6 +239,7 @@ then
             --set-number-backups) set_number_backups "$2";;
             --set-file-type) set_file_type "$2";;
             --set-destination-folder) set_destination_folder "$2";;
+            --set-origin-folder) set_origin_folder "$2";;
             *) help;;
         esac
         shift
