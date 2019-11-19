@@ -2,6 +2,8 @@
 
 INIT_PAR="#Specify the file extension to add to the backup
 file_type='db';
+#Specify the directory with the original files
+origin_folder=$(pwd)
 #Specify the destination folder where your backups will be stored (use abslute path)
 destination_folder=$(pwd)
 #Specify the maximum number of backups to store (default: 5)
@@ -51,7 +53,7 @@ To use CRAB, please move the script to the directory you want to backup."
 
 function check_utils {
 
-    . ./.crabrc || text_editor='vim'
+    . ~/.crabrc || text_editor='vim'
     if [ -z  $(which $text_editor) ]
     then
         echo "Please install $text_editor  or specify text-editor by using 'crab --set-text-editor <editor_name>'"
@@ -71,15 +73,16 @@ function check_utils {
 
 function change_config {
     
-    cd "$(dirname "$0")" || return
     echo "#Specify the file extension to add to the backup
 file_type=$file_type
 #Specify the destination folder where your backups will be stored (use abslute path)
 destination_folder=$destination_folder
+#Specify the directory with the original files
+origin_folder=$origin_folder
 #Specify the maximum number of backups to store (default: 5)
 number_backups=$number_backups
 #Specify text-editor (default: vim)
-text_editor=$text_editor" > .crabrc
+text_editor=$text_editor" > ~/.crabrc
     exit
      
 }
@@ -88,7 +91,7 @@ function set_text_editor {
     
     if [ -n "$1" ]
     then
-        . ./.crabrc || (echo Try to use 'crab -i' && exit)
+        . ~/.crabrc || (echo Try to use 'crab -i' && exit)
         text_editor=$1
         change_config
     else
@@ -100,7 +103,7 @@ function set_number_backups {
 
     if [ -n "$1" ]
     then
-        . ./.crabrc || (echo Try to use 'crab -i' && exit)
+        . ~/.crabrc || (echo Try to use 'crab -i' && exit)
         number_backups=$1
         change_config
     else
@@ -112,7 +115,7 @@ function set_file_type {
 
     if [ -n "$1" ]
     then
-        . ./.crabrc || (echo Try to use 'crab -i' && exit)
+        . ~/.crabrc || (echo Try to use 'crab -i' && exit)
         file_type=$1
         change_config 
     else
@@ -124,7 +127,7 @@ function set_destination_folder {
 
     if [ -n "$1" ]
     then
-        . ./.crabrc || (echo Try to use 'crab -i' && exit)
+        . ~/.crabrc || (echo Try to use 'crab -i' && exit)
         destination_folder=$1
         change_config
     else
@@ -134,27 +137,26 @@ function set_destination_folder {
 
 function init {
     
-    echo "$INIT_PAR" > .crabrc
+    echo "$INIT_PAR" > ~/.crabrc
     check_utils || exit
     echo -e "\e[5m Create .crabrc file... \e[0m"
     sleep 3s
-    . ./.crabrc
-    $text_editor .crabrc
+    . ~/.crabrc
+    $text_editor ~/.crabrc
 }
 
 function make_backup {
     
-    cd "$(dirname "$0")" || return
-    if [[ -f .crabrc ]]
+    if [[ -f ~/.crabrc ]]
     then
-        . ./.crabrc
+        . ~/.crabrc
         check_utils
         echo "Get to work, guys! Create a backup!"
         archive="backup-$(date +%Y-%m-%d:%H:%M:%S)"
         EXT=$file_type
         mkdir -p "$destination_folder"
         check_count_files
-        zip -r "$destination_folder/$archive.zip" $(ls | grep "$EXT$") #>> /dev/null
+        zip -r "$destination_folder/$archive.zip" $(ls $origin_folder | grep "$EXT$" | awk -v dir=$origin_folder/ '{ print dir $0 }') >> /dev/null
         if [[ $(unzip -tq "$destination_folder/$archive.zip") == "No"* ]]
         then
             echo "Saving..."
@@ -187,22 +189,21 @@ function version {
 
 function check_count_files {
     
-    cd "$(dirname "$0")" || return
-    . ./.crabrc
+    . ~/.crabrc
     cur_number=$(ls "$destination_folder"  | grep -c 'backup-.*.zip')
-    (( cur_number=$cur_number+1 ))
-    if [[ $cur_number -gt $number_backups ]]
-    then
+    (( cur_number=$cur_number-$number_backups+1 ))
+    for ((i=0; i<$cur_number;i++))
+    do
         rm "$destination_folder/$(ls "$destination_folder" | grep 'backup-.*.zip' | sort | grep --max-count=1 "backup")"
         echo "The oldest backup has been deleted"
-    fi
+    done
 }
 
 function write_config {
 
-    . ./.crabrc || text_editor='vim'
+    . ~/.crabrc || text_editor='vim'
     check_utils
-    $text_editor .crabrc
+    $text_editor ~/.crabrc
 }
 
 if [ -n "$1" ]
