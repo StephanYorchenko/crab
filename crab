@@ -47,8 +47,7 @@ usage <\$path_to_script>/crab [-v | --version]
 --set-file-type          (set type of files to save in backups)
 --set-destination-folder (set the path where backups will be stored)
 --set-origin-folder      (set the path where the original files are stored)
-
-To use CRAB, please move the script to the directory you want to backup."
+"
     
 }
 
@@ -196,7 +195,7 @@ function edit_crontab {
 
 function version {
     
-    echo -e "\e[35;1;5;101mC\e[37;102mR\e[36;105mA\e[39;107mB\e[0m" v.1.0.5
+    echo -e "\e[35;1;5;101mC\e[37;102mR\e[36;105mA\e[39;107mB\e[0m" v.1.1.2
 }
 
 function check_count_files {
