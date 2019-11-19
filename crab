@@ -29,19 +29,21 @@ usage <\$path_to_script>/crab [-v | --version]
                              [-m | --make]
                              [-c | --config]
                              [-e | --ecron]
-                             [--set-text-editor]
-                             [--set-number-backups]
-                             [--set-file-type]
+                             [--set-text-editor] PARAM
+                             [--set-number-backups] PARAM
+                             [--set-file-type] PARAM
+                             [--set-destination-folder] PARAM
 ---------------------------------------------
--v --version          (show version of the script)
--h --help             (show this tutorial)
--i --init             (create crabrc file in dirrectory for backup
--m --make             (create backup manually)
--c --config           (open text editor to rewrite configuration file)
--e --ecron            (change crontab config)
---set-text-editor     (change text editor (default: vim))
---set-number-backups  (change number backups (default: 5))
---set-file-type       (set type of files to save in backups)
+-v --version             (show version of the script)
+-h --help                (show this tutorial)
+-i --init                (create crabrc file in dirrectory for backup
+-m --make                (create backup manually)
+-c --config              (open text editor to rewrite configuration file)
+-e --ecron               (change crontab config)
+--set-text-editor        (change text editor (default: vim))
+--set-number-backups     (change number backups (default: 5))
+--set-file-type          (set type of files to save in backups)
+--set-destination-folder (set the path where backups will be stored)
 
 To use CRAB, please move the script to the directory you want to backup."
     
@@ -50,10 +52,19 @@ To use CRAB, please move the script to the directory you want to backup."
 function check_utils {
 
     . ./.crabrc || text_editor='vim'
-    echo $(which $text_editor)
     if [ -z  $(which $text_editor) ]
     then
         echo "Please install $text_editor  or specify text-editor by using 'crab --set-text-editor <editor_name>'"
+        exit
+    fi
+    if [ -z $(which zip) ]
+    then
+        echo "To use CRAB you should install zip util"
+        exit
+    fi
+    if [ -z $(which unzip) ]
+    then
+        echo "To use CRAB you shold install unzip"
         exit
     fi
 }
@@ -75,23 +86,50 @@ text_editor=$text_editor" > .crabrc
 
 function set_text_editor {
     
-    . ./.crabrc || (echo Try to use 'crab -i' && exit)
-    text_editor=$(echo $1)
-    change_config
+    if [ -n "$1" ]
+    then
+        . ./.crabrc || (echo Try to use 'crab -i' && exit)
+        text_editor=$1
+        change_config
+    else
+        help
+    fi
 }
 
 function set_number_backups {
 
-    . ./.crabrc || (echo Try to use 'crab -i' && exit)
-    number_backups=$1
-    change_config
+    if [ -n "$1" ]
+    then
+        . ./.crabrc || (echo Try to use 'crab -i' && exit)
+        number_backups=$1
+        change_config
+    else
+        help
+    fi
 }
 
 function set_file_type {
 
-    . ./.crabrc || (echo Try to use 'crab -i' && exit)
-   file_type=$1
-   change_config 
+    if [ -n "$1" ]
+    then
+        . ./.crabrc || (echo Try to use 'crab -i' && exit)
+        file_type=$1
+        change_config 
+    else
+        help
+    fi
+}
+
+function set_destination_folder {
+
+    if [ -n "$1" ]
+    then
+        . ./.crabrc || (echo Try to use 'crab -i' && exit)
+        destination_folder=$1
+        change_config
+    else
+        help
+    fi 
 }
 
 function init {
@@ -110,12 +148,13 @@ function make_backup {
     if [[ -f .crabrc ]]
     then
         . ./.crabrc
+        check_utils
         echo "Get to work, guys! Create a backup!"
         archive="backup-$(date +%Y-%m-%d:%H:%M:%S)"
         EXT=$file_type
-        check_count_files
         mkdir -p "$destination_folder"
-        zip -r "$destination_folder/$archive.zip" $(ls | grep "$EXT$") >> /dev/null
+        check_count_files
+        zip -r "$destination_folder/$archive.zip" $(ls | grep "$EXT$") #>> /dev/null
         if [[ $(unzip -tq "$destination_folder/$archive.zip") == "No"* ]]
         then
             echo "Saving..."
@@ -150,12 +189,11 @@ function check_count_files {
     
     cd "$(dirname "$0")" || return
     . ./.crabrc
-    cd "$destination_folder" ||return
-    cur_number=$(ls  | grep -c 'backup-.*.zip')
-    let "cur_number=$cur_number+1"
+    cur_number=$(ls "$destination_folder"  | grep -c 'backup-.*.zip')
+    (( cur_number=$cur_number+1 ))
     if [[ $cur_number -gt $number_backups ]]
     then
-        rm $(ls | grep 'backup-.*.zip' | sort | grep --max-count=1 "backup")
+        rm "$destination_folder/$(ls "$destination_folder" | grep 'backup-.*.zip' | sort | grep --max-count=1 "backup")"
         echo "The oldest backup has been deleted"
     fi
 }
@@ -187,6 +225,7 @@ then
             --set-text-editor) set_text_editor "$2";;
             --set-number-backups) set_number_backups "$2";;
             --set-file-type) set_file_type "$2";;
+            --set-destination-folder) set_destination_folder "$2";;
             *) help;;
         esac
         shift
