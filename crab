@@ -8,8 +8,8 @@ origin_folder=$(pwd)
 destination_folder=$(pwd)
 #Specify the maximum number of backups to store (default: 5)
 number_backups=5
-#Specify text-editor (default: $EDITOR)
-text_editor=$EDITOR"
+#Specify text-editor (default: vim)
+text_editor=vim"
 
 
 
