@@ -15,26 +15,26 @@ Key opportunity:
 4. Ousting the oldest backup, to eliminate the disk filling ( storage of no more than a given n copies)
 
 ---
-
     ---------------------------------------------
-    |     #####   #####      ###   #####        |
-    |    #        #    #   #   #   #    #       |
-    |    #        #    #   #   #   #    #       |
-    |    #        #####    #####   #####        |
-    |    #        #   #    #   #   #    #       |
-    |     #####   #    #   #   #   #####        |
+    |        _____ ______   ___  ______         |
+    |       /  __ \| ___ \ / _ \ | ___ \        |
+    |       | /  \/| |_/ // /_\ \| |_/ /        |
+    |       | |    |    / |  _  || ___ \        |
+    |       | \__/\| |\ \ | | | || |_/ /        |
+    |        \____/\_| \_|\_| |_/\____/         |
+    |                                           |
     |   CRAB - Create Regular Amiable Backup    |
     ---------------------------------------------
     usage <\$path_to_script>/crab [-v | --version]
-                                  [-h | --help]
-                                  [-i | --init]
-                                  [-m | --make]
-                                  [-c | --config]
-                                  [-e | --ecron]
-                                  [--set-text-editor] PARAM
-                                  [--set-number-backups] PARAM
-                                  [--set-file-type] PARAM
-                                  [--set-destination-folder] PARAM
+                                 [-h | --help]
+                                 [-i | --init]
+                                 [-m | --make]
+                                 [-c | --config]
+                                 [-e | --ecron]
+                                 [--set-text-editor] PARAM
+                                 [--set-number-backups] PARAM
+                                 [--set-file-type] PARAM
+                                 [--set-destination-folder] PARAM
     ---------------------------------------------
     -v --version             (show version of the script)
     -h --help                (show this tutorial)
@@ -46,5 +46,4 @@ Key opportunity:
     --set-number-backups     (change number backups (default: 5))
     --set-file-type          (set type of files to save in backups)
     --set-destination-folder (set the path where backups will be stored)
-    
-    To use CRAB, please move the script to the directory you want to backup.
+    --set-origin-folder      (set the path where the original files are stored)
